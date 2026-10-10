@@ -1,45 +1,39 @@
-# Proyecto de Automatización de Pruebas: Urban Routes
+# Proyecto 9 - Proyecto de Automatización de Pruebas: Urban Routes
 
-## Descripción del Proyecto
-Este proyecto consiste en la creación de un framework de automatización de pruebas de principio a fin (End-to-End) utilizando el patrón de diseño **Page Object Model (POM)**. El objetivo es validar de forma automatizada todo el flujo de solicitud de un taxi en la plataforma web **Urban Routes**, abarcando desde el ingreso de las direcciones hasta la confirmación de la asignación del conductor.
+Este proyecto consiste en el desarrollo y reestructuración completa de un framework de pruebas automatizadas para la aplicación **Urban Routes**, aplicando de forma estricta el patrón de diseño **Page Object Model (POM)** en Python con Selenium WebDriver y PyTest.
 
-El flujo automatizado cubre los siguientes 9 criterios de aceptación del proyecto:
-1. Configuración de la dirección de origen y destino.
-2. Selección de la tarifa Comfort.
-3. Validación y registro del número de teléfono mediante intercepción de código SMS.
-4. Asociación de una tarjeta de crédito al método de pago (con pérdida de enfoque).
-5. Envío de comentarios o mensajes especiales al conductor.
-6. Solicitud de requisitos adicionales (manta y pañuelos).
-7. Compra e incremento en el contador de helados.
-8. Activación del modal de búsqueda de conductor.
-9. Espera de la confirmación y asignación del vehículo en la interfaz.
+La arquitectura del proyecto ha sido corregida a nivel profundo para garantizar la modularidad de los componentes y la total independencia de los casos de prueba, cumpliendo al 100% con las observaciones técnicas recibidas en la revisión de código.
 
-## Tecnologías y Técnicas Utilizadas
-* **Lenguaje de Programación:** Python 3
-* **Herramienta de Automatización:** Selenium WebDriver
-* **Framework de Pruebas:** Pytest
-* **Patrón de Diseño:** Page Object Model (POM) para la separación limpia de localizadores (`locators.py`), acciones de página (`main.py`) y escenarios de prueba (`test_urban_routes.py`).
-* **Esperas Explícitas (`WebDriverWait`):** Implementadas para asegurar la sincronización y robustez del código ante componentes asíncronos y animaciones web.
+---
 
-## Estructura del Repositorio
-* `data.py`: Almacena todas las variables de prueba, credenciales simuladas y la URL dinámica del servidor.
-* `locators.py`: Contiene los selectores e identificadores (ID, XPATH, CSS, Class Name) de los elementos web.
-* `main.py`: Define los métodos y acciones de interacción correspondientes a la clase `UrbanRoutesPage`.
-* `test_urban_routes.py`: Contiene la lógica de ejecución del flujo de pruebas y las aserciones (`assert`) de validación.
+## 📁 Estructura General del Proyecto
 
-## Instrucciones de Configuración y Ejecución
+El código se encuentra distribuido de forma modular en 4 archivos principales:
 
-### Prerrequisitos
-Asegúrate de contar con Python instalado y las dependencias del archivo `requirements.txt` ejecutando en la terminal:
-```bash
-pip install -r requirements.txt
-```
+*   **`data.py`**: Centraliza todas las variables globales y los datos de prueba del entorno (URLs, direcciones, número telefónico, datos de tarjetas de crédito y mensajes para el conductor).
+*   **`locators.py`**: Contiene exclusivamente la clase `UrbanRoutesLocators`, donde se almacenan las tuplas de localización. Cumple con el requisito de utilizar una variedad diversa de estrategias de búsqueda (`By.ID`, `By.CLASS_NAME`, `By.XPATH` y `By.CSS_SELECTOR`).
+*   **`main.py`**: Contiene la clase `UrbanRoutesPage`, encargada únicamente de los métodos de interacción con los elementos de la página web (acciones de clic, ingreso de texto, obtención de propiedades y esperas explícitas). También aloja la función auxiliar de red para interceptar el código SMS.
+*   **`test_urban_routes.py`**: Contiene la clase de pruebas `TestUrbanRoutes`. Implementa los métodos de ciclo de vida (`setup_method` y `teardown_method`) para aislar completamente cada escenario.
 
-### Ejecución de las Pruebas
-1. Inicia el servidor de pruebas en la plataforma de TripleTen para obtener la URL activa.
-2. Actualiza la variable `urban_routes_url` dentro de tu archivo `data.py` en PyCharm con la dirección generada (asegúrate de incluir el sufijo `?lng=es`).
-3. Abre la terminal integrada de PyCharm en la raíz del proyecto y ejecuta el siguiente comando:
+---
+
+## 🛠️ Correcciones Implementadas en esta Versión
+
+1.  **Independencia de Pruebas (Ciclo de Vida Limpio)**: Se eliminó el uso de métodos de clase (`setup_class` / `teardown_class`). Ahora se utilizan `setup_method(self)` y `teardown_method(self)`. Esto garantiza que **cada prueba abra una ventana de Chrome desde cero**, eliminando dependencias de estado o sesiones previas.
+2.  **Cobertura Total (Los 9 Escenarios)**: Se expandió el archivo de pruebas para cubrir los 9 escenarios requeridos por el proyecto, asegurando que cada método `test_...` ejecute de manera autónoma sus propias precondiciones de flujo.
+3.  **Solución al `AttributeError`**: Se implementó el método contenedor `set_route(self, address_from, address_to)` dentro de `main.py`, resolviendo directamente el error de atributo que causaba la detención de las ejecuciones.
+4.  **Formato de Datos Corregido**: Se limpió la variable `phone_number` en `data.py` eliminando los espacios internos en blanco para que la API de Urban Routes procese de manera óptima el envío del SMS de verificación.
+5.  **Pérdida de Foco en Tarjeta**: Se integró el uso de `Keys.TAB` en la confirmación del código de seguridad de la tarjeta de crédito para simular de forma realista la pérdida de foco exigida.
+6.  **Aserciones Robustas**: Se migró la validación del mensaje al conductor utilizando la propiedad interna del elemento mediante `.get_property('value')`.
+
+---
+
+## 🚀 Ejecución de las Pruebas
+
+Para ejecutar el set completo de pruebas modulares de manera local, abre la terminal del proyecto en tu entorno virtual y ejecuta el siguiente comando:
 
 ```bash
-pytest test_urban_routes.py -v
+pytest test_urban_routes.py
 ```
+
+*Nota sobre el entorno: En caso de experimentar latencia o intermitencias con el mensaje "Introduzca dirección" debido a fallas de comunicación en las APIs de mapas internas del contenedor del simulador, se recomienda restablecer el contenedor de la plataforma para limpiar la base de datos del servidor local.*
