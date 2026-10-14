@@ -1,39 +1,38 @@
-# Proyecto 9 - Proyecto de Automatización de Pruebas: Urban Routes
+# Proyecto Urban Routes - Proyecto de Automatización de Pruebas: Urban Routes
 
-Este proyecto consiste en el desarrollo y reestructuración completa de un framework de pruebas automatizadas para la aplicación **Urban Routes**, aplicando de forma estricta el patrón de diseño **Page Object Model (POM)** en Python con Selenium WebDriver y PyTest.
+Este proyecto contiene la suite de pruebas automatizadas para la aplicación Urban Routes utilizando Python y Selenium WebDriver bajo el patrón de diseño Page Object Model (POM).
 
-La arquitectura del proyecto ha sido corregida a nivel profundo para garantizar la modularidad de los componentes y la total independencia de los casos de prueba, cumpliendo al 100% con las observaciones técnicas recibidas en la revisión de código.
+## 🛠️ Instalación
 
----
-
-## 📁 Estructura General del Proyecto
-
-El código se encuentra distribuido de forma modular en 4 archivos principales:
-
-*   **`data.py`**: Centraliza todas las variables globales y los datos de prueba del entorno (URLs, direcciones, número telefónico, datos de tarjetas de crédito y mensajes para el conductor).
-*   **`locators.py`**: Contiene exclusivamente la clase `UrbanRoutesLocators`, donde se almacenan las tuplas de localización. Cumple con el requisito de utilizar una variedad diversa de estrategias de búsqueda (`By.ID`, `By.CLASS_NAME`, `By.XPATH` y `By.CSS_SELECTOR`).
-*   **`main.py`**: Contiene la clase `UrbanRoutesPage`, encargada únicamente de los métodos de interacción con los elementos de la página web (acciones de clic, ingreso de texto, obtención de propiedades y esperas explícitas). También aloja la función auxiliar de red para interceptar el código SMS.
-*   **`test_urban_routes.py`**: Contiene la clase de pruebas `TestUrbanRoutes`. Implementa los métodos de ciclo de vida (`setup_method` y `teardown_method`) para aislar completamente cada escenario.
-
----
-
-## 🛠️ Correcciones Implementadas en esta Versión
-
-1.  **Independencia de Pruebas (Ciclo de Vida Limpio)**: Se eliminó el uso de métodos de clase (`setup_class` / `teardown_class`). Ahora se utilizan `setup_method(self)` y `teardown_method(self)`. Esto garantiza que **cada prueba abra una ventana de Chrome desde cero**, eliminando dependencias de estado o sesiones previas.
-2.  **Cobertura Total (Los 9 Escenarios)**: Se expandió el archivo de pruebas para cubrir los 9 escenarios requeridos por el proyecto, asegurando que cada método `test_...` ejecute de manera autónoma sus propias precondiciones de flujo.
-3.  **Solución al `AttributeError`**: Se implementó el método contenedor `set_route(self, address_from, address_to)` dentro de `main.py`, resolviendo directamente el error de atributo que causaba la detención de las ejecuciones.
-4.  **Formato de Datos Corregido**: Se limpió la variable `phone_number` en `data.py` eliminando los espacios internos en blanco para que la API de Urban Routes procese de manera óptima el envío del SMS de verificación.
-5.  **Pérdida de Foco en Tarjeta**: Se integró el uso de `Keys.TAB` en la confirmación del código de seguridad de la tarjeta de crédito para simular de forma realista la pérdida de foco exigida.
-6.  **Aserciones Robustas**: Se migró la validación del mensaje al conductor utilizando la propiedad interna del elemento mediante `.get_property('value')`.
-
----
+```bash
+git clone <url_del_repositorio>
+cd qa-project-Urban-Routes-es
+pip install selenium pytest
+```
 
 ## 🚀 Ejecución de las Pruebas
 
-Para ejecutar el set completo de pruebas modulares de manera local, abre la terminal del proyecto en tu entorno virtual y ejecuta el siguiente comando:
-
+Para correr la suite completa de pruebas, ejecuta:
 ```bash
 pytest test_urban_routes.py
 ```
 
-*Nota sobre el entorno: En caso de experimentar latencia o intermitencias con el mensaje "Introduzca dirección" debido a fallas de comunicación en las APIs de mapas internas del contenedor del simulador, se recomienda restablecer el contenedor de la plataforma para limpiar la base de datos del servidor local.*
+## 📂 Estructura del Proyecto
+
+* `data.py`: Contiene los datos estáticos de prueba (direcciones, teléfono, tarjeta, etc.).
+* `locators.py`: Centraliza todos los selectores de elementos web (clase UrbanRoutesLocators).
+* `main.py`: Contiene los Page Objects con los métodos de interacción de la interfaz.
+* `test_urban_routes.py`: Contiene los 9 escenarios de prueba independientes y sus aserciones.
+* `helpers.py`: Función utilitaria para recuperar el código SMS de confirmación.
+
+## 📋 Escenarios Cubiertos (9/9)
+
+1. Configurar la dirección de origen y destino.
+2. Seleccionar la tarifa Comfort.
+3. Rellenar el número de teléfono.
+4. Agregar una tarjeta de crédito/débito.
+5. Escribir un mensaje para el conductor.
+6. Pedir una manta y pañuelos.
+7. Pedir 2 helados.
+8. Esperar a que aparezca el modal con la información del conductor.
+9. Validar el flujo final del pedido de taxi.

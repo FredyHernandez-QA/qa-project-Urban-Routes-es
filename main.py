@@ -1,7 +1,8 @@
-import json
 import time
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from locators import UrbanRoutesLocators
 
 class UrbanRoutesPage:
@@ -21,7 +22,7 @@ class UrbanRoutesPage:
         field = self.wait_for_element(UrbanRoutesLocators.TO_FIELD)
         field.send_keys(address_to)
 
-    def set_route(self, address_from, address_to): # <-- SOLUCIÓN AL ATTRIBUTE-ERROR
+    def set_route(self, address_from, address_to):
         self.set_from(address_from)
         self.set_to(address_to)
 
@@ -33,11 +34,13 @@ class UrbanRoutesPage:
 
     # --- ESCENARIO 2: Tarifa Comfort ---
     def click_request_taxi_button(self):
-        from selenium.webdriver.support import expected_conditions as EC
-        from selenium.webdriver.support.ui import WebDriverWait
-        WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable(UrbanRoutesLocators.REQUEST_TAXI_BUTTON)
-        ).click()
+        # Corrección: Eliminados los imports duplicados de adentro y se captura TimeoutException específicamente
+        try:
+            WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(UrbanRoutesLocators.REQUEST_TAXI_BUTTON)
+            ).click()
+        except TimeoutException:
+            raise AssertionError("El botón para pedir taxi inicial no estuvo disponible o clickeable.")
 
     def select_comfort_tariff(self):
         self.wait_for_element(UrbanRoutesLocators.COMFORT_TARIFF_CARD).click()
@@ -45,7 +48,7 @@ class UrbanRoutesPage:
     def is_comfort_tariff_selected(self):
         try:
             return self.wait_for_element(UrbanRoutesLocators.COMFORT_TARIFF_ACTIVE, timeout=3).is_displayed()
-        except:
+        except TimeoutException:
             return False
 
     # --- ESCENARIO 3: Teléfono ---
@@ -77,11 +80,11 @@ class UrbanRoutesPage:
     def set_card_number(self, number):
         self.wait_for_element(UrbanRoutesLocators.CARD_NUMBER_INPUT).send_keys(number)
 
-    def set_card_code(self, code):
-        self.wait_for_element(UrbanRoutesLocators.CARD_CODE_INPUT).send_keys(code)
-
-    def get_card_code_field(self):
-        return self.wait_for_element(UrbanRoutesLocators.CARD_CODE_INPUT)
+    # Corrección: Se encapsula el envío de Keys.TAB dentro del Page Object para no exponer lógica de Selenium en el test
+    def set_card_code_and_tab(self, code):
+        field = self.wait_for_element(UrbanRoutesLocators.CARD_CODE_INPUT)
+        field.send_keys(code)
+        field.send_keys(Keys.TAB)
 
     def click_link_card_button(self):
         self.wait_for_element(UrbanRoutesLocators.LINK_CARD_BUTTON).click()
@@ -96,12 +99,12 @@ class UrbanRoutesPage:
     def set_driver_message(self, message):
         self.wait_for_element(UrbanRoutesLocators.DRIVER_MESSAGE_INPUT).send_keys(message)
 
-    def get_driver_message_field(self):
-        return self.wait_for_element(UrbanRoutesLocators.DRIVER_MESSAGE_INPUT)
+    # Corrección: Extrae el valor directamente en el método para limpiar la aserción en el archivo de pruebas
+    def get_driver_message(self):
+        return self.wait_for_element(UrbanRoutesLocators.DRIVER_MESSAGE_INPUT).get_property('value')
 
     # --- ESCENARIO 6: Manta y Pañuelos ---
     def toggle_blanket_and_tissues(self):
-        # Al ser un switch, se hace clic en su contenedor o etiqueta asociada mediante JS si es complejo
         element = self.driver.find_element(*UrbanRoutesLocators.BLANKET_SWITCH)
         self.driver.execute_script("arguments[0].click();", element)
 
@@ -124,26 +127,8 @@ class UrbanRoutesPage:
 
     # --- ESCENARIO 9: Esperar Asignación de Conductor ---
     def wait_for_driver_assignment(self):
-        # Se le da un tiempo prudente (p. ej. 60s) para que cambie el estado del taxista
+        # Corrección: Se utiliza la condición lambda para ignorar de forma explícita los estados intermedios como 'Buscar automóvil'
         WebDriverWait(self.driver, 60).until(
-            lambda d: d.find_element(*UrbanRoutesLocators.DRIVER_INFO_HEADER).text != ""
+            lambda d: d.find_element(*UrbanRoutesLocators.DRIVER_INFO_HEADER).text not in ["", "Buscar automóvil"]
         )
-        return True
-
-# --- Función Auxiliar Provista por TripleTen ---
-def retrieve_phone_code(driver) -> str:
-    """Intercepta el código SMS desde los registros de red de Chrome."""
-    for i in range(10):
-        time.sleep(1)
-        logs = driver.get_log('performance')
-        for log in logs:
-            message = json.loads(log['message'])['message']
-            if message['method'] == 'Network.responseReceived':
-                request_id = message['params']['requestId']
-                try:
-                    body = driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': request_id})
-                    if 'code' in body['body']:
-                        return json.loads(body['body'])['code']
-                except:
-                    pass
-    raise Exception("No se encontró el código de confirmación del teléfono en los registros de red.")
+        return self.driver.find_element(*UrbanRoutesLocators.DRIVER_INFO_HEADER).text
